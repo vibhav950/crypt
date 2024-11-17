@@ -153,6 +153,7 @@ static void aes192_expand_key(const aes_key *key, aes_ks *ks) {
   temp2 = _mm_aeskeygenassist_si128(temp3, 0x80);
   KEY_192_ASSIST(&temp1, &temp2, &temp3);
   Key_Schedule[12] = temp1;
+  _mm256_zeroall();
 }
 
 static void aes256_expand_key(const aes_key *key, aes_ks *ks) {
@@ -265,6 +266,32 @@ int aesni_set_decrypt_ks(const aes_key *key, aes_ks *ks, int bits) {
 #define AESENCLAST(x, y) _mm_aesenclast_si128(x, y)
 #define AESDEC(x, y) _mm_aesdec_si128(x, y)
 #define AESDECLAST(x, y) _mm_aesdeclast_si128(x, y)
+
+void aesni_block_encr(uint8_t *in, uint8_t *out, const aes_ks *ks) {
+  const __m128i *rk = (const __m128i *)ks->rk;
+  __m128i tmp = LOAD128((const __m128i *)in);
+  int j;
+  tmp = XOR128(tmp, rk[0]);
+  for (j = 1; j < ks->nr; j++) {
+    tmp = AESENC(tmp, rk[j]);
+  }
+  tmp = AESENCLAST(tmp, rk[j]);
+  STORE128((__m128i *)out, tmp);
+  ZEROALL256();
+}
+
+void aesni_block_decr(uint8_t *in, uint8_t *out, const aes_ks *ks) {
+  const __m128i *rk = (const __m128i *)ks->rk;
+  __m128i tmp = LOAD128((const __m128i *)in);
+  int j;
+  tmp = XOR128(tmp, rk[0]);
+  for (j = 1; j < ks->nr; j++) {
+    tmp = AESDEC(tmp, rk[j]);
+  }
+  tmp = AESDECLAST(tmp, rk[j]);
+  STORE128((__m128i *)out, tmp);
+  ZEROALL256();
+}
 
 void aesni_ecb_encr(const uint8_t *in, uint8_t *out, unsigned int len,
                     const aes_ks *ks) {

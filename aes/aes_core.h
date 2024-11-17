@@ -54,6 +54,12 @@ int aesni_set_encrypt_ks(const aes_key *key, aes_ks *ks, int bits);
 
 int aesni_set_decrypt_ks(const aes_key *key, aes_ks *ks, int bits);
 
+/** To avoid wasting a copy, we allow \p in and \p out to overlap. */
+void aesni_block_encr(uint8_t *in, uint8_t *out, const aes_ks *ks);
+
+/** To avoid wasting a copy, we allow \p in and \p out to overlap. */
+void aesni_block_decr(uint8_t *in, uint8_t *out, const aes_ks *ks);
+
 void aesni_ecb_encr(const uint8_t *in, uint8_t *out, unsigned int len,
                     const aes_ks *ks);
 
