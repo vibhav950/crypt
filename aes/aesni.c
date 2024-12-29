@@ -419,18 +419,7 @@ void __aesni_ctr128_encr(const uint8_t *in, uint8_t *out, unsigned int len,
 }
 
 #ifdef AESNI_TEST_VECS
-#include <assert.h>
-#include <stdio.h>
-#include <strings.h>
-
-static void read_hex(const char *hex, uint8_t *buf, const uint32_t len) {
-  uint32_t i, value;
-
-  for (i = 0; i < len; ++i) {
-    sscanf(hex + 2 * i, "%02x", &value);
-    buf[i] = (uint8_t)value;
-  }
-}
+#include "common/test_utils.h"
 
 /**
  * Test vectors obtained from NIST SP 800-38A (2001 ed.)
