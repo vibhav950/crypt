@@ -272,9 +272,8 @@ void aesni_block_encr(uint8_t *in, uint8_t *out, const aes_ks *ks) {
   __m128i tmp = LOAD128((const __m128i *)in);
   int j;
   tmp = XOR128(tmp, rk[0]);
-  for (j = 1; j < ks->nr; j++) {
+  for (j = 1; j < ks->nr; j++)
     tmp = AESENC(tmp, rk[j]);
-  }
   tmp = AESENCLAST(tmp, rk[j]);
   STORE128((__m128i *)out, tmp);
   ZEROALL256();
@@ -285,9 +284,8 @@ void aesni_block_decr(uint8_t *in, uint8_t *out, const aes_ks *ks) {
   __m128i tmp = LOAD128((const __m128i *)in);
   int j;
   tmp = XOR128(tmp, rk[0]);
-  for (j = 1; j < ks->nr; j++) {
+  for (j = 1; j < ks->nr; j++)
     tmp = AESDEC(tmp, rk[j]);
-  }
   tmp = AESDECLAST(tmp, rk[j]);
   STORE128((__m128i *)out, tmp);
   ZEROALL256();
@@ -307,9 +305,8 @@ void aesni_ecb_encr(const uint8_t *in, uint8_t *out, unsigned int len,
   for (i = 0; i < len; i++) {
     tmp = LOAD128(invec + i);
     tmp = XOR128(tmp, rk[0]);
-    for (j = 1; j < ks->nr; j++) {
+    for (j = 1; j < ks->nr; j++)
       tmp = AESENC(tmp, rk[j]);
-    }
     tmp = AESENCLAST(tmp, rk[j]);
     STORE128(outvec + i, tmp);
   }
@@ -330,9 +327,8 @@ void aesni_ecb_decr(const uint8_t *in, uint8_t *out, unsigned int len,
   for (i = 0; i < len; i++) {
     tmp = LOAD128(invec + i);
     tmp = XOR128(tmp, rk[0]);
-    for (j = 1; j < ks->nr; j++) {
+    for (j = 1; j < ks->nr; j++)
       tmp = AESDEC(tmp, rk[j]);
-    }
     tmp = AESDECLAST(tmp, rk[j]);
     STORE128(outvec + i, tmp);
   }
@@ -378,9 +374,8 @@ void aesni_cbc_decr(const uint8_t *in, uint8_t *out, unsigned int len,
   for (i = 0; i < len; i++) {
     last_in = LOAD128(invec + i);
     data = XOR128(last_in, rk[0]);
-    for (j = 1; j < ks->nr; j++) {
+    for (j = 1; j < ks->nr; j++)
       data = AESDEC(data, rk[j]);
-    }
     data = AESDECLAST(data, rk[j]);
     data = XOR128(data, feedback);
     STORE128(outvec + i, data);
@@ -389,8 +384,8 @@ void aesni_cbc_decr(const uint8_t *in, uint8_t *out, unsigned int len,
   ZEROALL256();
 }
 
-void __aesni_ctr128_encr(const uint8_t *in, uint8_t *out, unsigned int len,
-                         const aes_ks *ks, const uint8_t ctr[AES_BLOCK_SIZE]) {
+void aesni_ctr128_encr(const uint8_t *in, uint8_t *out, unsigned int len,
+                       const aes_ks *ks, const uint8_t ctr[AES_BLOCK_SIZE]) {
   const __m128i *rk = (const __m128i *)ks->rk;
   const __m128i *invec = (const __m128i *)in;
   __m128i *outvec = (__m128i *)out;
@@ -408,9 +403,8 @@ void __aesni_ctr128_encr(const uint8_t *in, uint8_t *out, unsigned int len,
     counter_be = SHUF8(counter_le, BSWAP_EPI32);
     counter_le = ADD32(counter_le, ONE);
     counter_be = XOR128(counter_be, rk[0]);
-    for (j = 1; j < ks->nr; j++) {
+    for (j = 1; j < ks->nr; j++)
       counter_be = AESENC(counter_be, rk[j]);
-    }
     counter_be = AESENCLAST(counter_be, rk[j]);
     counter_be = XOR128(counter_be, LOAD128(invec + i));
     STORE128(outvec + i, counter_be);
@@ -418,7 +412,7 @@ void __aesni_ctr128_encr(const uint8_t *in, uint8_t *out, unsigned int len,
   ZEROALL256();
 }
 
-#ifdef AESNI_TEST_VECS
+#ifdef AESNI_KATS
 #include "common/test_utils.h"
 
 /**
@@ -583,11 +577,11 @@ static void test_aesni_ctr() {
            ciphertext, 64);
 
   aesni_set_encrypt_ks(&key, &ks, 128);
-  __aesni_ctr128_encr(plaintext, buf, 64, &ks, counter);
+  aesni_ctr128_encr(plaintext, buf, 64, &ks, counter);
   assert(!memcmp(ciphertext, buf, 64));
 
   /* F.5.2 CTR-AES128.Decrypt */
-  __aesni_ctr128_encr(ciphertext, buf, 64, &ks, counter);
+  aesni_ctr128_encr(ciphertext, buf, 64, &ks, counter);
   assert(!memcmp(plaintext, buf, 64));
 
   /* F.5.3 CTR-AES192.Encrypt */
@@ -601,11 +595,11 @@ static void test_aesni_ctr() {
            ciphertext, 64);
 
   aesni_set_encrypt_ks(&key, &ks, 192);
-  __aesni_ctr128_encr(plaintext, buf, 64, &ks, counter);
+  aesni_ctr128_encr(plaintext, buf, 64, &ks, counter);
   assert(!memcmp(ciphertext, buf, 64));
 
   /* F.5.4 CTR-AES192.Decrypt */
-  __aesni_ctr128_encr(ciphertext, buf, 64, &ks, counter);
+  aesni_ctr128_encr(ciphertext, buf, 64, &ks, counter);
   assert(!memcmp(plaintext, buf, 64));
 
   /* F.5.5 CTR-AES256.Encrypt */
@@ -619,11 +613,11 @@ static void test_aesni_ctr() {
            ciphertext, 64);
 
   aesni_set_encrypt_ks(&key, &ks, 256);
-  __aesni_ctr128_encr(plaintext, buf, 64, &ks, counter);
+  aesni_ctr128_encr(plaintext, buf, 64, &ks, counter);
   assert(!memcmp(ciphertext, buf, 64));
 
   /* F.5.6 CTR-AES256.Decrypt */
-  __aesni_ctr128_encr(ciphertext, buf, 64, &ks, counter);
+  aesni_ctr128_encr(ciphertext, buf, 64, &ks, counter);
   assert(!memcmp(plaintext, buf, 64));
 }
 
@@ -640,4 +634,4 @@ int main() {
   printf("All tests passed\n");
 }
 
-#endif /* AESNI_TEST_VECS */
+#endif /* AESNI_KATS */

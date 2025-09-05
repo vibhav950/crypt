@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 
 static void read_hex(const char *hex, uint8_t *buf, const uint32_t len) {
   uint32_t i, value;

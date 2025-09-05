@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -DHMAC_TEST_VECS -Wno-incompatible-pointer-types -I../
+CFLAGS = -DHMAC_KATS -Wno-incompatible-pointer-types -I../
 
 COMMON_PATH = ../common
 SHA512_PATH = ../sha512

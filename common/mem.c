@@ -2,70 +2,45 @@
  * mem.c - safer alternatives for common memory functions
  */
 
-#include <stdint.h>
+#include "defines.h"
+#include <string.h>
 
-volatile void *crypt_memset(volatile void *mem, int ch, size_t len) {
+typedef void *(*memset_t)(void *, int, size_t);
+static volatile memset_t memset_func = memset;
+
+void *crypt_memset(void *mem, int ch, size_t len) {
   volatile char *p;
 
-  if (!mem)
+  if (mem == NULL)
     return NULL;
-  for (p = (volatile char *)mem; len; p[--len] = ch)
-    ;
+  memset_func(mem, ch, len);
   return mem;
 }
 
-volatile void *crypt_memzero(volatile void *mem, size_t len) {
+void *crypt_memzero(void *mem, size_t len) {
   volatile char *p;
 
-  if (!mem)
+  if (mem == NULL)
     return NULL;
-  for (p = (volatile char *)mem; len; p[--len] = 0x00)
-    ;
+  memset_func(mem, 0, len);
   return mem;
 }
 
-volatile void *crypt_memcpy(volatile void *dst, volatile void *src,
-                            size_t len) {
-  volatile char *cdst, *csrc;
-
-  if (!dst || !src)
-    return NULL;
-  cdst = (volatile char *)dst;
-  csrc = (volatile char *)src;
-  while (len--)
-    cdst[len] = csrc[len];
-  return dst;
+void *crypt_memcpy(void *dst, const void *src, size_t len) {
+  return memcpy(dst, src, len);
 }
 
-volatile void *crypt_memmove(volatile void *dst, volatile void *src,
-                             size_t len) {
-  size_t i;
-  volatile char *cdst, *csrc;
-
-  if (!dst || !src)
-    return NULL;
-  cdst = (volatile char *)dst;
-  csrc = (volatile char *)src;
-  if (csrc > cdst && csrc < cdst + len) {
-    for (i = 0; i < len; i++)
-      cdst[i] = csrc[i];
-  } else {
-    while (len--)
-      cdst[len] = csrc[len];
-  }
-  return dst;
+void *crypt_memmove(void *dst, const void *src, size_t len) {
+  return memmove(dst, src, len);
 }
 
 /* Returns zero if a[0:len-1] == b[0:len-1], otherwise non-zero. */
-unsigned int crypt_memcmp(const void *a, const void *b, size_t len) {
-  unsigned int res = 0;
-  const char *pa, *pb;
+int crypt_memcmp(const void *a, const void *b, size_t len) {
+  unsigned char res = 0;
+  const volatile unsigned char *ca = (const volatile unsigned char *)a;
+  const volatile unsigned char *cb = (const volatile unsigned char *)b;
 
-  if (!a || !b)
-    return 1;
-  pa = (const char *)a;
-  pb = (const char *)b;
-  for (; len; res |= pa[len] ^ pb[len], len--)
+  for (; len; --len, res |= ca[len] ^ cb[len])
     ;
   return res;
 }
@@ -78,8 +53,8 @@ unsigned int crypt_memcmp(const void *a, const void *b, size_t len) {
   Thanks to John's blog:
   https://nachtimwald.com/2017/04/02/constant-time-string-comparison-in-c/
 */
-unsigned int crypt_strcmp(const char *str, const char *x) {
-  unsigned int res = 0;
+int crypt_strcmp(const char *str, const char *x) {
+  int res = 0;
   volatile size_t i, j, k;
 
   if (!str || !x)

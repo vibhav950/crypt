@@ -2,6 +2,7 @@
 
 #include "memzero.h"
 
+#include <stddef.h>
 #include <stdint.h>
 
 #undef MAX
@@ -12,22 +13,26 @@
 
 #define COUNTOF(x) (sizeof(x) / sizeof((x)[0]))
 
-extern volatile void *crypt_memset(volatile void *mem, int ch, size_t len);
-extern volatile void *crypt_memzero(volatile void *mem, size_t len);
-extern volatile void *crypt_memcpy(volatile void *dst, volatile void *src,
-                                   size_t len);
-extern volatile void *crypt_memmove(volatile void *dst, volatile void *src,
-                                    size_t len);
-extern unsigned int crypt_memcmp(const void *a, const void *b, size_t len);
-extern unsigned int crypt_strcmp(const char *str, const char *x);
+void *crypt_memset(void *mem, int ch, size_t len);
+void *crypt_memzero(void *mem, size_t len);
+void *crypt_memcpy(void *dst, const void *src, size_t len);
+void *crypt_memmove(void *dst, const void *src, size_t len);
+int crypt_memcmp(const void *a, const void *b, size_t len);
+int crypt_strcmp(const char *str, const char *x);
 
+#if defined(__GNUC__)
 #define ALIGN(N) __attribute__((aligned(N)))
+#elif defined(_MSC_VER)
+#define ALIGN(N) __declspec(align(N))
+#else
+#define ALIGN(N)
+#endif
 
-#define Ptrv(ptr) ((void *)(ptr))
-#define Ptr8(ptr) ((uint8_t *)(ptr))
-#define Ptr16(ptr) ((uint16_t *)(ptr))
-#define Ptr32(ptr) ((uint32_t *)(ptr))
-#define Ptr64(ptr) ((uint64_t *)(ptr))
+#define PTRV(ptr) ((void *)(ptr))
+#define PTR8(ptr) ((uint8_t *)(ptr))
+#define PTR16(ptr) ((uint16_t *)(ptr))
+#define PTR32(ptr) ((uint32_t *)(ptr))
+#define PTR64(ptr) ((uint64_t *)(ptr))
 
 #if defined(__GNUC__) && !defined(__clang__)
 #define PRAGMA_UNROLL_8 _Pragma("GCC unroll 8")
@@ -61,26 +66,13 @@ extern unsigned int crypt_strcmp(const char *str, const char *x);
 #define BSWAP32(x) bswap32(x)
 #define BSWAP64(x) bswap64(x)
 
+#if defined(_MSC_VER)
 #include <intrin.h>
-
-#if defined(__GNUC__) && !defined(__clang__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunknown-pragmas"
-#pragma intrinsic(_rotl8, _rotl16, _rotr8, _rotr16)
-#pragma GCC diagnostic pop
-#elif defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunknown-pragmas"
-#pragma intrinsic(_rotl8, _rotl16, _rotr8, _rotr16)
-#pragma clang diagnostic pop
-#endif
-
-#if defined(__GNUC__) || defined(__clang__)
+#include <stdlib.h>
 #define ROTL8(x, s) _rotl8((x), (s))
 #define ROTL16(x, s) _rotl16((x), (s))
 #define ROTL32(x, s) _rotl((x), (s))
 #define ROTL64(x, s) _rotl64((x), (s))
-
 #define ROTR8(x, s) _rotr8((x), (s))
 #define ROTR16(x, s) _rotr16((x), (s))
 #define ROTR32(x, s) _rotr((x), (s))
@@ -90,7 +82,6 @@ extern unsigned int crypt_strcmp(const char *str, const char *x);
 #define ROTL16(x, s) (((uint16_t)(x) << (s)) | ((uint16_t)(x) >> (16 - (s))))
 #define ROTL32(x, s) (((uint32_t)(x) << (s)) | ((uint32_t)(x) >> (32 - (s))))
 #define ROTL64(x, s) (((uint64_t)(x) << (s)) | ((uint64_t)(x) >> (64 - (s))))
-
 #define ROTR8(x, s) (((uint8_t)(x) >> (s)) | ((uint8_t)(x) << (8 - (s))))
 #define ROTR16(x, s) (((uint16_t)(x) >> (s)) | ((uint16_t)(x) << (16 - (s))))
 #define ROTR32(x, s) (((uint32_t)(x) >> (s)) | ((uint32_t)(x) << (32 - (s))))

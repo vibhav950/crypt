@@ -19,9 +19,10 @@ static const int hash_method_size[][3] = {
     [DIGEST_SHA3_512] = {BYTE_LEN(576), BYTE_LEN(576), BYTE_LEN(512)}};
 
 #define CHECK(cond)                                                            \
-  if (ret = (cond)) {                                                          \
-    goto cleanup;                                                              \
-  }
+  do {                                                                         \
+    if (ret = (cond))                                                          \
+      goto cleanup;                                                            \
+  } while (0)
 
 int hmac(digest_method_t *digest_method, const uint8_t *key, size_t key_len,
          const uint8_t *data, size_t data_len, uint8_t *digest,
@@ -74,7 +75,7 @@ int hmac(digest_method_t *digest_method, const uint8_t *key, size_t key_len,
     CHECK(digest_method->update(hctx, key, key_len));
     CHECK(digest_method->final(hctx, k0));
   } else {
-    crypt_memcpy(k0, (volatile void *)key, key_len);
+    crypt_memcpy(k0, key, key_len);
   }
 
   /** Output tag generation */
@@ -111,7 +112,7 @@ cleanup:
   return ret;
 }
 
-#if defined(HMAC_TEST_VECS)
+#if defined(HMAC_KATS)
 #include "common/test_utils.h"
 #include "sha512/sha512.h"
 
@@ -244,4 +245,4 @@ int main() {
   return 0;
 }
 
-#endif // HMAC_TEST_VECS
+#endif // HMAC_KATS

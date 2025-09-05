@@ -112,7 +112,7 @@ int sha512_final(sha512_digest_t *ctx, uint8_t *out) {
 
   // Append the length in bits as a 128-bit big-endian number
   crypt_memset(&ctx->rem_data[SHA512_BLOCK_SIZE_BYTES - 16], 0, 8);
-  crypt_memcpy(&ctx->rem_data[SHA512_BLOCK_SIZE_BYTES - 8], Ptr8(&len_bits), 8);
+  crypt_memcpy(&ctx->rem_data[SHA512_BLOCK_SIZE_BYTES - 8], PTR8(&len_bits), 8);
 
   sha512_compress(&ctx->state, ctx->rem_data, 1);
 
